@@ -1,0 +1,585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>McDonald's | Smart Rewards</title>
+    <style>
+        :root {
+            --mc-yellow: #FFBC0D;
+            --mc-red: #DB0007;
+            --mc-dark: #292929;
+            --bg-light: #FAFAFA;
+            --white: #FFFFFF;
+            --shadow: 0 10px 30px rgba(0,0,0,0.05);
+            --green: #28a745;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { 
+            font-family: 'Helvetica Neue', Arial, sans-serif; 
+            background-color: var(--bg-light); 
+            color: var(--mc-dark); 
+            overflow-x: hidden; 
+            scroll-behavior: smooth;
+        }
+
+        /* --- NAVIGATION --- */
+        header {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 6%; background: var(--white);
+            position: sticky; top: 0; z-index: 1000; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+        }
+        
+        .brand { display: flex; align-items: center; gap: 10px; cursor: pointer; }
+        .logo-img { height: 45px; width: auto; transition: transform 0.3s; }
+        .brand:hover .logo-img { transform: scale(1.1); }
+        .brand-name { font-weight: 900; font-size: 22px; letter-spacing: -1px; }
+
+        .nav-actions { display: flex; align-items: center; gap: 20px; }
+        .cart-icon { position: relative; cursor: pointer; font-size: 24px; transition: transform 0.2s; }
+        .cart-icon:hover { transform: scale(1.1); }
+        .cart-badge { position: absolute; top: -5px; right: -8px; background: var(--mc-red); color: white; border-radius: 50%; width: 18px; height: 18px; font-size: 11px; display: flex; align-items: center; justify-content: center; font-weight: bold; }
+        
+        .btn-order-nav { background: var(--mc-yellow); border: none; padding: 10px 25px; border-radius: 50px; font-weight: bold; cursor: pointer; transition: transform 0.2s; }
+        .btn-order-nav:hover { transform: translateY(-2px); }
+
+        /* --- 1. PSYCHOLOGICAL HERO (Diagonal Split) --- */
+        .hero-split {
+            display: flex;
+            height: 550px;
+            background: #111;
+            overflow: hidden;
+            position: relative;
+        }
+        .hero-left {
+            flex: 1;
+            padding: 80px 6%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            color: white;
+            z-index: 2;
+        }
+        .hero-left h1 { font-size: clamp(40px, 5vw, 65px); line-height: 0.95; font-weight: 900; margin-bottom: 20px; }
+        .hero-left span { color: var(--mc-yellow); }
+        .hero-right {
+            flex: 1.2;
+            background: #000;
+            clip-path: polygon(15% 0, 100% 0, 100% 100%, 0% 100%);
+            display: flex; align-items: center; justify-content: center;
+            position: relative;
+        }
+        .hero-right img {
+            width: 90%; max-width: 600px;
+            transform: rotate(-5deg);
+            filter: drop-shadow(-20px 20px 30px rgba(0,0,0,0.5));
+            animation: float 4s ease-in-out infinite;
+        }
+        @keyframes float { 0%, 100% { transform: translateY(0) rotate(-5deg); } 50% { transform: translateY(-15px) rotate(-3deg); } }
+
+        /* --- 2. SCROLLING RIBBON --- */
+        .ribbon-container {
+            background: var(--mc-yellow);
+            padding: 12px 0;
+            overflow: hidden;
+            white-space: nowrap;
+            border-top: 4px solid var(--mc-red);
+            position: relative; z-index: 5;
+        }
+        .ribbon-text {
+            display: inline-block;
+            animation: scroll 30s linear infinite;
+            font-weight: 900; font-size: 18px; text-transform: uppercase; color: #111;
+        }
+        .ribbon-item { margin: 0 40px; }
+        @keyframes scroll { from { transform: translateX(0); } to { transform: translateX(-50%); } }
+
+        /* --- 3. STICKY FILTERS & MENU --- */
+        .category-sticky {
+            position: sticky; top: 75px; z-index: 900;
+            background: var(--bg-light);
+            padding: 20px 6%;
+            display: flex; gap: 15px;
+            overflow-x: auto; scrollbar-width: none;
+            border-bottom: 1px solid rgba(0,0,0,0.05);
+        }
+        .cat-btn { 
+            background: white; border: 1px solid #ddd; padding: 10px 25px; border-radius: 30px; 
+            white-space: nowrap; cursor: pointer; font-weight: bold; transition: all 0.2s; 
+        }
+        .cat-btn.active, .cat-btn:hover { background: var(--mc-dark); color: var(--mc-yellow); border-color: var(--mc-dark); transform: translateY(-2px); box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+
+        .view { display: none; min-height: 80vh; animation: fadeIn 0.4s ease-out; }
+        .view.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 35px; padding: 40px 6%; }
+        
+        .card { 
+            background: var(--white); border-radius: 20px; overflow: hidden; 
+            box-shadow: var(--shadow); transition: all 0.3s; cursor: pointer; 
+            border: 1px solid transparent; display: flex; flex-direction: column; 
+        }
+        .card:hover { transform: translateY(-8px); border-color: var(--mc-yellow); box-shadow: 0 20px 40px rgba(0,0,0,0.1); }
+        
+        .card-img-box { height: 180px; overflow: hidden; background: #f8f8f8; display: flex; align-items: center; justify-content: center; }
+        .card-img { width: 100%; height: 100%; object-fit: cover; }
+        
+        .card-content { padding: 20px; flex: 1; display: flex; flex-direction: column; justify-content: space-between; }
+        .card h3 { font-size: 18px; margin-bottom: 5px; color: #222; font-weight: 800; }
+        .card-price { color: var(--mc-red); font-weight: 900; font-size: 18px; margin-top: 10px; display: block; }
+        
+        /* --- SMART FALLBACK --- */
+        .fallback-section {
+            margin: 0 6% 60px; padding: 40px;
+            background: #fff; border: 2px dashed #ddd; border-radius: 20px;
+            display: none; animation: fadeIn 0.5s ease;
+        }
+        .fallback-section.active { display: block; }
+
+        /* --- CART --- */
+        .cart-layout { display: flex; gap: 40px; padding: 40px 6%; }
+        .cart-main { flex: 2; background: white; border-radius: 25px; padding: 30px; box-shadow: var(--shadow); }
+        .cart-side { flex: 1; }
+        
+        .tray-item { display: flex; align-items: center; justify-content: space-between; padding: 20px 0; border-bottom: 1px solid #eee; }
+        .qty-controls { display: flex; align-items: center; gap: 15px; background: #f8f8f8; padding: 8px 15px; border-radius: 15px; }
+        
+        .addon-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin-top: 15px; }
+        .addon-chip { background: #f8f8f8; border: 1px solid #ddd; padding: 10px; border-radius: 12px; font-size: 13px; cursor: pointer; text-align: center; transition: 0.2s; }
+        .addon-chip:hover { background: var(--mc-yellow); border-color: var(--mc-yellow); font-weight: bold; }
+
+        /* --- REWARD PROGRESS --- */
+        .reward-box {
+            background: #fff0f0; padding: 15px; border-radius: 15px; margin-bottom: 20px; border: 1px solid #ffd6d6;
+            transition: 0.3s;
+        }
+        .reward-title { font-size: 12px; font-weight: bold; color: var(--mc-red); margin-bottom: 8px; display:flex; justify-content:space-between; }
+        .progress-track { background: #ddd; height: 10px; border-radius: 5px; overflow: hidden; }
+        .progress-fill { background: var(--mc-red); width: 0%; height: 100%; transition: width 0.5s; }
+        
+        .reward-box.unlocked { background: #e6ffe6; border-color: #b3ffb3; }
+        .reward-box.unlocked .reward-title { color: var(--green); }
+        .reward-box.unlocked .progress-fill { background: var(--green); }
+
+        /* --- COUPON TICKETS --- */
+        .coupon-list { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+        .coupon-ticket {
+            border: 2px dashed #ddd; padding: 12px; border-radius: 10px; cursor: pointer; transition: 0.2s;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .coupon-ticket:hover { background: #fdfdfd; border-color: #bbb; }
+        .coupon-ticket.active { border-color: var(--mc-red); background: #fff5f5; }
+        .coupon-code { font-weight: 900; color: var(--mc-dark); font-size: 14px; }
+        .coupon-desc { font-size: 12px; color: #666; margin-top: 2px; }
+        .apply-text { font-size: 12px; font-weight: bold; color: var(--mc-red); }
+
+        /* --- HELPERS --- */
+        .btn-red { background: var(--mc-red); color: white; border: none; padding: 15px 35px; border-radius: 30px; font-weight: bold; cursor: pointer; font-size: 16px; width: 100%; margin-top: 15px; }
+        .loading { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255,255,255,0.95); z-index: 9999; align-items: center; justify-content: center; flex-direction: column; }
+        .loading.active { display: flex; }
+        .spinner { width: 60px; height: 60px; border: 5px solid #eee; border-top: 5px solid var(--mc-red); border-radius: 50%; animation: spin 0.8s linear infinite; }
+        @keyframes spin { 100% { transform: rotate(360deg); } }
+
+        @media (max-width: 768px) {
+            .hero-split { flex-direction: column; height: auto; }
+            .hero-right { clip-path: none; height: 300px; }
+            .cart-layout { flex-direction: column; }
+            .grid { gap: 20px; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand" onclick="switchPage('home')">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/3/36/McDonald%27s_Golden_Arches.svg" alt="McDonald's" class="logo-img">
+            <span class="brand-name">McDonald's</span>
+        </div>
+        <div class="nav-actions">
+            <div class="cart-icon" onclick="switchPage('cart')">
+                🛒 <span class="cart-badge" id="cart-count">0</span>
+            </div>
+            <button class="btn-order-nav" onclick="switchPage('home')">ORDER MENU</button>
+        </div>
+    </header>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <h2 style="margin-top:20px;">Processing Payment...</h2>
+        <p id="loading-text" style="color:#777">Connecting to UPI...</p>
+    </div>
+
+    <div id="view-home" class="view active">
+        <section class="hero-split">
+            <div class="hero-left">
+                <h1>DON'T BE <br><span>STUPID.</span></h1>
+                <p style="font-size: 18px; color: #ccc; margin: 20px 0 30px; line-height: 1.5;">Why pay full price? Join 5,000+ smart fans using our Family Saver Bundles and 2x1 Offers today.</p>
+                <button class="btn-order-nav" style="width: fit-content; padding: 15px 40px;" onclick="switchPage('cart')">CLAIM SAVINGS</button>
+            </div>
+            <div class="hero-right">
+                <img src="https://images.unsplash.com/photo-1568901346375-23c9450c58cd?q=80&w=1000" alt="Burger">
+            </div>
+        </section>
+
+        <div class="ribbon-container">
+            <div class="ribbon-text">
+                <span class="ribbon-item">⚡ 15 MIN DELIVERY</span>
+                <span class="ribbon-item">🔥 SERVED HOT</span>
+                <span class="ribbon-item">🍔 100% BEEF</span>
+                <span class="ribbon-item">🎁 FREE GOODIES ON ₹5000+</span>
+                <span class="ribbon-item">🍦 COLD DESSERTS</span>
+                <span class="ribbon-item">👑 PREMIUM MEMBERSHIP</span>
+            </div>
+        </div>
+
+        <div class="category-sticky">
+            <button class="cat-btn active" onclick="filterMenu('all', this)">All Menu</button>
+            <button class="cat-btn" onclick="filterMenu('Burger', this)">Burgers</button>
+            <button class="cat-btn" onclick="filterMenu('Mandi', this)">Mandi (Arabian)</button>
+            <button class="cat-btn" onclick="filterMenu('Chicken', this)">Chicken</button>
+            <button class="cat-btn" onclick="filterMenu('Wraps', this)">Wraps</button>
+            <button class="cat-btn" onclick="filterMenu('Beverage', this)">Beverages</button>
+            <button class="cat-btn" onclick="filterMenu('Dessert', this)">Desserts</button>
+        </div>
+
+        <h2 id="section-title" style="margin: 40px 6% 0; font-size: 30px; font-weight: 900; text-transform: uppercase;">International Favorites</h2>
+        <div class="grid" id="menu-products">
+            </div>
+
+        <div id="fallback-container" class="fallback-section">
+            <h3 style="margin-bottom: 20px; font-size: 24px;">👇 Still looking? People who liked that also ordered:</h3>
+            <div class="grid" id="fallback-grid" style="padding: 0; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));"></div>
+        </div>
+    </div>
+
+    <div id="view-cart" class="view">
+        <div class="cart-layout">
+            <div class="cart-main">
+                <h2 style="margin-bottom:20px; font-weight:900;">Your Tray</h2>
+                <div id="cart-items-list"></div>
+                
+                <div style="background:#f9f9f9; padding:20px; border-radius:15px; margin-top:30px;">
+                    <h3 style="font-size:16px; margin-bottom:10px;">🍟 Add Flavor (Don't miss out)</h3>
+                    <div class="addon-grid">
+                        <div class="addon-chip" onclick="addAddon('Extra Cheese', 30)">+ Extra Cheese (₹30)</div>
+                        <div class="addon-chip" onclick="addAddon('Peri Peri Mix', 20)">+ Peri Peri (₹20)</div>
+                        <div class="addon-chip" onclick="addAddon('Mayo Dip', 25)">+ Mayo Dip (₹25)</div>
+                    </div>
+                </div>
+
+                <div style="background: linear-gradient(135deg, #FFD700 0%, #FFAA00 100%); padding: 25px; border-radius: 20px; margin-top: 30px; cursor: pointer; display:flex; justify-content:space-between; align-items:center;" onclick="togglePremium()">
+                    <div>
+                        <h3 style="color:#5a3a00; margin:0;">👑 McGold Membership</h3>
+                        <p style="color:#5a3a00; margin:5px 0 0;">Get Free Delivery for 3 months.</p>
+                    </div>
+                    <div id="premium-status" style="background:white; width:40px; height:40px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#ddd;">✓</div>
+                </div>
+            </div>
+            
+            <div class="cart-side">
+                <div style="background:white; padding:30px; border-radius:25px; box-shadow:var(--shadow); position:sticky; top:100px;">
+                    
+                    <div class="reward-box" id="reward-box">
+                        <div class="reward-title">
+                            <span id="reward-msg">Spend ₹5000 for FREE GOODIES!</span>
+                            <span id="reward-amt">₹0 / ₹5000</span>
+                        </div>
+                        <div class="progress-track">
+                            <div class="progress-fill" id="reward-bar"></div>
+                        </div>
+                    </div>
+
+                    <h3>Delivery Details</h3>
+                    <input type="text" value="Maliankara, Kerala 683516" readonly style="margin:15px 0;">
+                    
+                    <label style="font-size:12px; font-weight:bold; color:#555;">Select Delivery Partner</label>
+                    <select id="delivery-partner" style="width:100%; padding:12px; border-radius:10px; border:1px solid #ddd; margin: 5px 0 15px; font-weight:bold;">
+                        <option value="Sanjay" selected>Sanjay (4.9 ★) - Fastest (Default)</option>
+                        <option value="Fresher">Fresher (New Joiner)</option>
+                        <option value="Vishnu">Vishnu (4.8 ★)</option>
+                        <option value="Yadav">Yadav (4.7 ★)</option>
+                        <option value="Aakash">Aakash (4.8 ★)</option>
+                        <option value="Karthick">Karthick (4.9 ★)</option>
+                        <option value="Navaneeth">Navaneeth (4.6 ★)</option>
+                        <option value="Ananth">Ananth (4.8 ★)</option>
+                    </select>
+
+                    <label style="font-size:12px; font-weight:bold; color:#555;">Available Offers (Click to Apply)</label>
+                    <div class="coupon-list">
+                        <div class="coupon-ticket" onclick="applyCoupon('WELCOME50', 'flat', 50, this)">
+                            <div><div class="coupon-code">WELCOME50</div><div class="coupon-desc">Flat ₹50 OFF on first order</div></div>
+                            <div class="apply-text">APPLY</div>
+                        </div>
+                        <div class="coupon-ticket" onclick="applyCoupon('FREEDEL', 'delivery', 0, this)">
+                            <div><div class="coupon-code">FREEDEL</div><div class="coupon-desc">Free Delivery (Orders > ₹200)</div></div>
+                            <div class="apply-text">APPLY</div>
+                        </div>
+                        <div class="coupon-ticket" onclick="applyCoupon('JUMBO20', 'percent', 20, this)">
+                            <div><div class="coupon-code">JUMBO20</div><div class="coupon-desc">20% OFF on Orders > ₹500</div></div>
+                            <div class="apply-text">APPLY</div>
+                        </div>
+                    </div>
+
+                    <div class="order-summary" style="margin-top:20px;">
+                        <div style="display:flex; justify-content:space-between; margin:10px 0;"><span>Subtotal</span><span id="cart-subtotal">₹0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; margin:10px 0; display:none;" id="row-membership"><span>McGold Plan</span><span>₹299.00</span></div>
+                        <div style="display:flex; justify-content:space-between; margin:10px 0; color:green; display:none;" id="row-discount"><span>You Saved</span><span id="cart-discount">-₹0.00</span></div>
+                        <div style="display:flex; justify-content:space-between; margin:10px 0;"><span>Delivery</span><span id="cart-delivery">₹40.00</span></div>
+                        <hr style="border:none; border-top:1px solid #eee; margin:15px 0;">
+                        <div style="display:flex; justify-content:space-between; margin:10px 0; font-size:20px; font-weight:900;"><span>Total</span><span id="cart-grand-total">₹0.00</span></div>
+                    </div>
+                    <button class="btn-red" onclick="placeOrder()">PAY WITH UPI</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-track" class="view">
+        <div style="padding: 40px 6%;">
+            <h1 style="font-size:32px">Order #MCD-8821</h1>
+            <p style="color:var(--mc-red); font-weight:bold; font-size:20px;">Arriving in <span id="time-est">25</span> Mins</p>
+            <p style="color:#555; margin-top:5px;">Driver: <strong id="driver-display">Assigning...</strong></p>
+            
+            <div style="height:450px; background:#eee; border-radius:30px; margin-top:30px; overflow:hidden; border:2px solid #ddd; position:relative;">
+                <iframe width="100%" height="100%" style="border:0;" loading="lazy" allowfullscreen src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3927.464603957814!2d76.21443431479532!3d10.150117992748723!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3b081a6d4d1d6a3d%3A0x4a1d6d4d1d6a3d!2sMaliankara%2C%20Kerala%20683516!5e0!3m2!1sen!2sin!4v1625000000000!5m2!1sen!2sin"></iframe>
+                <div style="position:absolute; bottom:20px; left:20px; right:20px; background:white; padding:15px; border-radius:15px; box-shadow:0 10px 20px rgba(0,0,0,0.1); display:flex; align-items:center; gap:15px;">
+                    <div style="font-size:30px; background:#f4f4f4; width:50px; height:50px; display:flex; align-items:center; justify-content:center; border-radius:50%">🛵</div>
+                    <div>
+                        <h4 style="margin:0">Out for Delivery</h4>
+                        <small style="color:#777">Your food is on the way!</small>
+                    </div>
+                </div>
+            </div>
+            <button class="btn-red" onclick="switchPage('home')">Order More</button>
+        </div>
+    </div>
+
+    <script>
+        // --- DATA INJECTION ---
+        const products = [];
+        let id = 1;
+        function addItem(name, cat, price, img) {
+            products.push({ id: id++, name, category: cat, price, image: img });
+        }
+
+        // 1. MANDI & ARABIAN
+        addItem("Chicken Mandi (Half)", "Mandi", 240, "https://images.unsplash.com/photo-1633945274405-b6c8069047b0?w=500");
+        addItem("Alfaham Mandi", "Mandi", 280, "https://images.unsplash.com/photo-1596797038530-2c107229654b?w=500");
+        addItem("Mutton Mandi", "Mandi", 550, "https://images.unsplash.com/photo-1563379091339-03b21ab4a4f8?w=500");
+        
+        // 2. BURGERS
+        addItem("Big Mac", "Burger", 210, "https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=500");
+        addItem("McChicken", "Burger", 130, "https://images.unsplash.com/photo-1572802419224-296b0aeee0d9?w=500");
+        addItem("McSpicy Paneer", "Burger", 180, "https://images.unsplash.com/photo-1550547660-d9450f859349?w=500");
+        
+        // 3. OTHERS
+        addItem("Coke (M)", "Beverage", 90, "https://images.unsplash.com/photo-1622483767028-3f66f32aef97?w=500");
+        addItem("McFlurry Oreo", "Dessert", 110, "https://images.unsplash.com/photo-1563805042-7684c019e1cb?w=500");
+        addItem("Spicy Wrap", "Wraps", 190, "https://images.unsplash.com/photo-1626700051175-6818013e1d4f?w=500");
+
+        // --- STATE ---
+        let cart = [];
+        let isPremium = false;
+        let activeCoupon = null;
+
+        function switchPage(pageId) {
+            document.querySelectorAll('.view').forEach(v => v.classList.remove('active'));
+            document.getElementById('view-' + pageId).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // --- RENDER MENU ---
+        function filterMenu(cat, btn) {
+            if(btn) {
+                document.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+            }
+            const grid = document.getElementById('menu-products');
+            const fallbackContainer = document.getElementById('fallback-container');
+            const fallbackGrid = document.getElementById('fallback-grid');
+            
+            const filtered = cat === 'all' ? products : products.filter(p => p.category === cat);
+            
+            grid.innerHTML = filtered.map(p => `
+                <div class="card" onclick="addToCart(${p.id})">
+                    <div class="card-img-box"><img src="${p.image}" class="card-img"></div>
+                    <div class="card-content">
+                        <h3>${p.name}</h3>
+                        <span class="card-price">₹${p.price}</span>
+                        <button class="btn-order-nav" style="margin-top:10px; width:100%">ADD +</button>
+                    </div>
+                </div>
+            `).join('');
+
+            document.getElementById('section-title').innerText = cat === 'all' ? "International Favorites" : cat + " Menu";
+
+            if(filtered.length < 2) {
+                fallbackContainer.classList.add('active');
+                const suggestions = products.filter(p => p.category !== cat).sort(() => 0.5 - Math.random()).slice(0, 3);
+                fallbackGrid.innerHTML = suggestions.map(p => `
+                    <div class="card" onclick="addToCart(${p.id})">
+                        <div class="card-img-box" style="height:120px"><img src="${p.image}" class="card-img"></div>
+                        <div class="card-content" style="padding:15px">
+                            <h3 style="font-size:14px">${p.name}</h3>
+                            <span class="card-price" style="font-size:14px">₹${p.price}</span>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                fallbackContainer.classList.remove('active');
+            }
+        }
+
+        // --- CART LOGIC ---
+        function addToCart(id) {
+            const p = products.find(i => i.id === id);
+            const existing = cart.find(i => i.id === id);
+            if(existing) existing.qty++;
+            else cart.push({...p, qty: 1});
+            
+            updateCartUI();
+            const badge = document.getElementById('cart-count');
+            badge.style.transform = "scale(1.5)";
+            setTimeout(() => badge.style.transform = "scale(1)", 200);
+        }
+
+        function addAddon(name, price) {
+            cart.push({ id: 999 + Math.floor(Math.random()*100), name: "Addon: " + name, price: price, qty: 1, image: "https://images.unsplash.com/photo-1619250907082-f9829f273574?w=100" });
+            updateCartUI();
+        }
+
+        function changeQty(id, delta) {
+            const item = cart.find(i => i.id === id);
+            if(item) {
+                item.qty += delta;
+                if(item.qty <= 0) cart = cart.filter(i => i.id !== id);
+                updateCartUI();
+            }
+        }
+
+        function togglePremium() {
+            isPremium = !isPremium;
+            const status = document.getElementById('premium-status');
+            const row = document.getElementById('row-membership');
+            
+            if(isPremium) {
+                status.style.background = "green"; status.style.color = "white"; row.style.display = "flex";
+            } else {
+                status.style.background = "white"; status.style.color = "#ddd"; row.style.display = "none";
+            }
+            updateCartUI();
+        }
+
+        function applyCoupon(code, type, value, element) {
+            document.querySelectorAll('.coupon-ticket').forEach(el => {
+                el.classList.remove('active'); el.querySelector('.apply-text').innerText = "APPLY"; el.querySelector('.apply-text').style.color = "var(--mc-red)";
+            });
+            if(activeCoupon && activeCoupon.code === code) {
+                activeCoupon = null;
+            } else {
+                element.classList.add('active'); element.querySelector('.apply-text').innerText = "APPLIED"; element.querySelector('.apply-text').style.color = "green";
+                activeCoupon = { code, type, value };
+            }
+            updateCartUI();
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items-list');
+            document.getElementById('cart-count').innerText = cart.reduce((s,i) => s+i.qty, 0);
+            
+            let listHtml = "";
+            
+            if(cart.length === 0) {
+                listHtml = `<p style="text-align:center; color:#999; padding:20px;">Tray is empty.</p>`;
+            } else {
+                listHtml = cart.map(i => `
+                    <div class="tray-item">
+                        <div><div style="font-weight:bold">${i.name}</div><div style="color:#666">₹${i.price}</div></div>
+                        <div class="qty-controls">
+                            <span onclick="changeQty(${i.id}, -1)" style="cursor:pointer">−</span>
+                            <span style="font-weight:bold">${i.qty}</span>
+                            <span onclick="changeQty(${i.id}, 1)" style="cursor:pointer">+</span>
+                        </div>
+                    </div>
+                `).join('');
+            }
+
+            let subtotal = cart.reduce((s,i) => s + (i.price*i.qty), 0);
+
+            // --- REWARD LOGIC > 5000 ---
+            const threshold = 5000;
+            const rewardBox = document.getElementById('reward-box');
+            const bar = document.getElementById('reward-bar');
+            
+            const progress = Math.min(100, (subtotal / threshold) * 100);
+            bar.style.width = progress + '%';
+
+            if(subtotal >= threshold) {
+                rewardBox.classList.add('unlocked');
+                document.getElementById('reward-msg').innerText = "🎉 FREE GOODIES UNLOCKED!";
+                document.getElementById('reward-amt').innerText = "Done";
+                
+                // Add visual goodie item
+                listHtml += `
+                    <div class="tray-item" style="background:#e6ffe6; border-radius:10px; padding:10px; border:1px solid #b3ffb3;">
+                        <div>
+                            <div style="font-weight:bold; color:green">🎁 FREE SURPRISE GOODIES</div>
+                            <div style="font-size:12px; color:#555">Premium Merch & Extra Fries</div>
+                        </div>
+                        <div style="font-weight:bold; color:green">FREE</div>
+                    </div>
+                `;
+            } else {
+                rewardBox.classList.remove('unlocked');
+                document.getElementById('reward-msg').innerText = "Spend ₹5000 for FREE GOODIES!";
+                document.getElementById('reward-amt').innerText = `₹${subtotal} / ₹${threshold}`;
+            }
+
+            list.innerHTML = listHtml;
+
+            // Coupon Calcs
+            let delivery = isPremium ? 0 : 40;
+            let memberCost = isPremium ? 299 : 0;
+            let discountAmount = 0;
+
+            if(activeCoupon) {
+                if(activeCoupon.type === 'flat') discountAmount = activeCoupon.value;
+                else if(activeCoupon.type === 'delivery' && subtotal > 200) { discountAmount = delivery; delivery = 0; }
+                else if(activeCoupon.type === 'percent' && subtotal > 500) discountAmount = subtotal * (activeCoupon.value / 100);
+            }
+
+            if(discountAmount > 0) {
+                document.getElementById('row-discount').style.display = "flex";
+                document.getElementById('cart-discount').innerText = "-₹" + discountAmount.toFixed(0);
+            } else {
+                document.getElementById('row-discount').style.display = "none";
+            }
+
+            let total = Math.max(0, subtotal + delivery + memberCost - discountAmount);
+            document.getElementById('cart-subtotal').innerText = "₹" + subtotal;
+            document.getElementById('cart-delivery').innerText = "₹" + delivery;
+            document.getElementById('cart-grand-total').innerText = "₹" + total.toFixed(0);
+        }
+
+        function placeOrder() {
+            if(cart.length === 0) return alert("Your tray is empty!");
+            const driver = document.getElementById('delivery-partner').value;
+            const loader = document.getElementById('loading');
+            loader.classList.add('active');
+            
+            setTimeout(() => {
+                loader.classList.remove('active');
+                document.getElementById('driver-display').innerText = driver + " is on the way!";
+                cart = []; activeCoupon = null; isPremium = false;
+                updateCartUI();
+                switchPage('track');
+            }, 2500);
+        }
+
+        // Init
+        filterMenu('all');
+    </script>
+</body>
+</html>
